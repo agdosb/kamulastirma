@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamulaştırma Haritası ve Listesi</title>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- Leaflet (Harita) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f8f9fa; }
+        .header { background-color: #2c3e50; color: white; padding: 15px; text-align: center; }
+        .container { display: flex; flex-direction: column; padding: 20px; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        #map { height: 500px; width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #ccc; z-index: 1;}
+        .table-container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        table.dataTable thead th { background-color: #4F81BD; color: white; }
+        
+        .info-popup { font-size: 14px; }
+        .info-popup h4 { margin: 0 0 10px 0; color: #4F81BD; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .info-popup p { margin: 5px 0; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Kamulaştırma İnteraktif Haritası ve Tablosu</h2>
+</div>
+
+<div class="container">
+    <!-- Harita Alanı -->
+    <div id="map"></div>
+    
+    <!-- Tablo Alanı -->
+    <div class="table-container">
+        <table id="kamulastirmaTablosu" class="display stripe hover" style="width:100%"></table>
+    </div>
+</div>
+
+<script>
+    var csvDataList = [];
+    var geojsonLayer;
+    var map;
+
+    $(document).ready(function() {
+        
+        // 1. Haritayı Başlat
+        map = L.map('map').setView([39.943, 32.541], 15); // Sincan başlangıç konumu
+        
+        // Google Uydu (Hybrid) Altlığı
+        L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: '© Google Maps'
+        }).addTo(map);
+
+        // 2. CSV Dosyasını Oku
+        Papa.parse("kamulastirma_listesi.csv", {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                csvDataList = results.data;
+                
+                if(csvDataList.length === 0) return;
+
+                // Tablo Sütunlarını oluştur
+                var columns = [];
+                Object.keys(csvDataList[0]).forEach(function(key) {
+                    columns.push({ title: key, data: key });
+                });
+
+                // DataTables Başlat
+                $('#kamulastirmaTablosu').DataTable({
+                    data: csvDataList,
+                    columns: columns,
+                    language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json' },
+                    pageLength: 10,
+                    responsive: true
+                });
+
+                // 3. Harita GeoJSON Verisini Yükle
+                loadGeoJSON();
+            }
+        });
+
+    });
+
+    function loadGeoJSON() {
+        $.getJSON("kamulastirma_parselleri.geojson", function(data) {
+            
+            geojsonLayer = L.geoJSON(data, {
+                style: function (feature) {
+                    return {
+                        color: "#ff0000",
+                        weight: 3,
+                        opacity: 1,
+                        fillColor: "#ff0000",
+                        fillOpacity: 0.2
+                    };
+                },
+                onEachFeature: function (feature, layer) {
+                    var parselNo = feature.properties.parsel_no;
+                    
+                    // Tıklama olayı
+                    layer.on('click', function (e) {
+                        // Tıklanan parselin verilerini CSV'den bul
+                        var foundRows = csvDataList.filter(row => {
+                            // "Ada / Parsel" sütun adının tam eşleştiğinden emin olmak için esnek kontrol
+                            var key = Object.keys(row).find(k => k.includes("Parsel") || k.includes("Ada"));
+                            return row[key] && row[key].toString().trim() === parselNo.trim();
+                        });
+
+                        var popupContent = "<div class='info-popup'>";
+                        popupContent += "<h4>Ada / Parsel: " + parselNo + "</h4>";
+                        
+                        if(foundRows.length > 0) {
+                            // Toplam alan ilk satırdan alınabilir
+                            var topAlanKey = Object.keys(foundRows[0]).find(k => k.includes("Toplam"));
+                            if(topAlanKey) popupContent += "<p><strong>Toplam Alan:</strong> " + foundRows[0][topAlanKey] + " m²</p>";
+                            
+                            popupContent += "<hr><p><strong>Malikler:</strong></p><ul>";
+                            foundRows.forEach(row => {
+                                var malikKey = Object.keys(row).find(k => k.includes("Malik"));
+                                var hisseKey = Object.keys(row).find(k => k.includes("Hisse") && !k.includes("Alan"));
+                                if(malikKey) {
+                                    var malik = row[malikKey];
+                                    var hisse = hisseKey ? " (" + row[hisseKey] + ")" : "";
+                                    popupContent += "<li>" + malik + hisse + "</li>";
+                                }
+                            });
+                            popupContent += "</ul>";
+                        } else {
+                            popupContent += "<p>Tabloda bu parsele ait kayıt bulunamadı.</p>";
+                        }
+                        popupContent += "</div>";
+
+                        layer.bindPopup(popupContent).openPopup();
+                    });
+                    
+                    // Mouse üzerine gelince efekt
+                    layer.on('mouseover', function () {
+                        this.setStyle({ fillOpacity: 0.5, color: '#ffff00' });
+                    });
+                    layer.on('mouseout', function () {
+                        geojsonLayer.resetStyle(this);
+                    });
+                }
+            }).addTo(map);
+
+            // Haritayı yüklü parsellere otomatik ortala
+            map.fitBounds(geojsonLayer.getBounds());
+        });
+    }
+</script>
+
+</body>
+</html>
