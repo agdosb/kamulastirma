@@ -1,0 +1,2 @@
+# kamulastirma
+ANKARA ANADOLU GERİ DÖNÜŞÜMCÜLERİ İHTİSAS OSB'NİN KAMULAŞTIRMA SÜRECİ TAKİBİ İÇİNDİR.
