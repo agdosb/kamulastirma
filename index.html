@@ -765,8 +765,27 @@
                 if (colMap.nitelik && rows[0][colMap.nitelik]) {
                     html += `<p><strong>Nitelik:</strong> ${rows[0][colMap.nitelik]}</p>`;
                 }
-                if (colMap.kamulastirma && rows[0][colMap.kamulastirma]) {
-                    html += `<p><strong>Kamulaştırma Durumu:</strong> ${rows[0][colMap.kamulastirma]}</p>`;
+                if (colMap.kamulastirma) {
+                    const statusTotals = new Map();
+                    let sumHisseAll = 0;
+                    rows.forEach(r => {
+                        const statusRaw = String(r[colMap.kamulastirma] || '').trim();
+                        const status = statusRaw || 'Belirtilmemiş';
+                        const hArea = colMap.hisseAlan ? parseNumber(r[colMap.hisseAlan]) : 0;
+                        sumHisseAll += hArea;
+                        statusTotals.set(status, (statusTotals.get(status) || 0) + hArea);
+                    });
+
+                    const baseArea = alan > 0 ? alan : sumHisseAll;
+                    const sortedStatuses = [...statusTotals.entries()].sort((a, b) => b[1] - a[1]);
+
+                    html += `<p><strong>Kamulaştırma Durumu:</strong></p><ul style="margin-top:4px; margin-bottom:6px;">`;
+                    sortedStatuses.forEach(([status, areaSum]) => {
+                        const pct = baseArea > 0 ? (areaSum / baseArea) * 100 : 0;
+                        const pctFormatted = pct.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        html += `<li><strong>${status}:</strong> %${pctFormatted} (${formatArea(areaSum)} m²)</li>`;
+                    });
+                    html += `</ul>`;
                 }
                 html += `<p><strong>Malik Sayısı:</strong> ${rows.length}</p><ul>`;
                 rows.forEach(r => {
