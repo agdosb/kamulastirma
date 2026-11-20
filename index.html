@@ -612,6 +612,14 @@
             return num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // Malik bilgisindeki KN: ile başlayan kimlik numaralarının ilk 4 hanesinden sonrasını * ile gizle
+        function maskMalikKN(text) {
+            if (!text) return text;
+            return String(text).replace(/(KN\s*:\s*)(\d{4})(\d+)/gi, function(match, prefix, first4, rest) {
+                return prefix + first4 + '*'.repeat(rest.length);
+            });
+        }
+
         // 3. CSV Verisini Yükle (UTF-8 ve Windows-1254 Otomatik Algılama)
         fetch('kamulastirma_listesi.csv')
             .then(response => {
@@ -649,6 +657,15 @@
                         colMap.hisse = findCol(h => h === 'hisse' || (h.includes('hisse') && !h.includes('alan')));
                         colMap.hisseAlan = findCol(h => h.includes('hisse') && h.includes('alan'));
                         colMap.kamulastirma = findCol(h => h.includes('kamulastirma') || h.includes('durum'));
+
+                        // Malik bilgisindeki kimlik numaralarını maskele
+                        if (colMap.malik) {
+                            allData.forEach(row => {
+                                if (row[colMap.malik]) {
+                                    row[colMap.malik] = maskMalikKN(row[colMap.malik]);
+                                }
+                            });
+                        }
 
                         populateDropdowns();
                         loadGeoJSON();
