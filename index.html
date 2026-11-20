@@ -798,8 +798,22 @@
                 }
             });
 
+            const onlyKamulastirmaFiltered = Boolean(activeFilters.kamulastirma) &&
+                filterIds.every(item => item.key === 'kamulastirma' || !activeFilters[item.key]);
+
             let totalParselArea = 0;
-            uniqueParselMap.forEach(val => totalParselArea += val);
+            if (onlyKamulastirmaFiltered) {
+                const allUniqueParselMap = new Map();
+                allData.forEach(r => {
+                    const pNo = colMap.parsel ? String(r[colMap.parsel] || '').trim() : '';
+                    if (pNo && !allUniqueParselMap.has(pNo)) {
+                        allUniqueParselMap.set(pNo, colMap.toplamAlan ? parseNumber(r[colMap.toplamAlan]) : 0);
+                    }
+                });
+                allUniqueParselMap.forEach(val => totalParselArea += val);
+            } else {
+                uniqueParselMap.forEach(val => totalParselArea += val);
+            }
 
             document.getElementById('kpiParselCount').textContent = uniqueParselMap.size;
             document.getElementById('kpiTotalArea').innerHTML = `${formatArea(totalParselArea)} <span>m²</span>`;
