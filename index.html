@@ -158,18 +158,18 @@
 
         /* SOL PANEL: FİLTRELER */
         .filter-body {
-            padding: 16px;
+            padding: 14px 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             flex: 1;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
 
         .filter-group label {
@@ -180,50 +180,24 @@
             letter-spacing: 0.4px;
         }
 
-        .form-input, .form-select {
+        .form-select {
             width: 100%;
-            padding: 9px 12px;
+            padding: 8px 10px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             font-size: 13px;
             font-family: inherit;
             color: var(--text-dark);
+            background-color: #ffffff;
             outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-input:focus, .form-select:focus {
-            border-color: var(--primary);
-        }
-
-        .range-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .chip-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-
-        .chip-btn {
-            padding: 6px 12px;
-            border: 1px solid #cbd5e1;
-            background: #fff;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-dark);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            text-overflow: ellipsis;
         }
 
-        .chip-btn.active {
-            background: var(--primary);
-            color: #fff;
+        .form-select:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.15);
         }
 
         .filter-footer {
@@ -424,41 +398,65 @@
     <!-- ANA 3 SÜTUNLU PANEL -->
     <main class="dashboard-grid">
         
-        <!-- SOL PANEL: FİLTRELER VE SORGULAR -->
+        <!-- SOL PANEL: FİLTRELER VE SORGULAR (TÜMÜ AÇILIR LİSTE) -->
         <aside class="panel-card">
             <div class="panel-title">FİLTRELER VE SORGULAR</div>
             <div class="filter-body">
                 
                 <div class="filter-group">
-                    <label for="filterParsel">ADA / PARSEL NO</label>
-                    <input type="text" id="filterParsel" class="form-input" placeholder="örn. 4582/1, 4582/3">
+                    <label for="filterIl">İL</label>
+                    <select id="filterIl" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filterMalik">MALİK ADI / KİMLİK NO (KN)</label>
-                    <input type="text" id="filterMalik" class="form-input" placeholder="İsim veya TC/KN ara...">
+                    <label for="filterIlce">İLÇE</label>
+                    <select id="filterIlce" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
-                    <label>PARSEL SEÇİMİ</label>
-                    <div class="chip-container" id="parselChips">
-                        <!-- Dinamik dolacak -->
-                    </div>
+                    <label for="filterMahalle">MAHALLE</label>
+                    <select id="filterMahalle" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filterMevkii">MAHALLE / MEVKİİ</label>
+                    <label for="filterMevkii">MEVKİİ</label>
                     <select id="filterMevkii" class="form-select">
                         <option value="">Tümü</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label>TOPLAM PARSEL ALANI (m²)</label>
-                    <div class="range-row">
-                        <input type="number" id="filterMinAlan" class="form-input" placeholder="min">
-                        <input type="number" id="filterMaxAlan" class="form-input" placeholder="max">
-                    </div>
+                    <label for="filterParsel">ADA / PARSEL</label>
+                    <select id="filterParsel" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filterNitelik">NİTELİK</label>
+                    <select id="filterNitelik" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filterMalik">MALİK BİLGİSİ</label>
+                    <select id="filterMalik" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filterKamulastirma">KAMULAŞTIRMA DURUMU</label>
+                    <select id="filterKamulastirma" class="form-select">
+                        <option value="">Tümü</option>
+                    </select>
                 </div>
 
             </div>
@@ -543,8 +541,18 @@
         let allData = [];
         let geojsonData = null;
         let geojsonLayer = null;
-        let selectedChipParsel = "";
         let colMap = {};
+
+        const filterIds = [
+            { id: 'filterIl', key: 'il' },
+            { id: 'filterIlce', key: 'ilce' },
+            { id: 'filterMahalle', key: 'mahalle' },
+            { id: 'filterMevkii', key: 'mevkii' },
+            { id: 'filterParsel', key: 'parsel' },
+            { id: 'filterNitelik', key: 'nitelik' },
+            { id: 'filterMalik', key: 'malik' },
+            { id: 'filterKamulastirma', key: 'kamulastirma' }
+        ];
 
         // 2. Leaflet Haritasını Başlat (Google Earth Uydu Altlığı)
         const map = L.map('map').setView([39.9425, 32.541], 16);
@@ -570,11 +578,23 @@
             "OpenStreetMap": osmLayer
         }).addTo(map);
 
-        // Sayı dönüştürücü (9,992.17 veya 9992.17 formatlarını parse eder)
+        // Türkçe başlık eşleştirici
+        function normalizeHeader(str) {
+            return String(str || '')
+                .toLocaleLowerCase('tr-TR')
+                .replace(/ı/g, 'i')
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]/g, '');
+        }
+
+        // Sayı dönüştürücü
         function parseNumber(val) {
             if (val === null || val === undefined || val === "") return 0;
             let s = String(val).trim();
-            // Eğer hem virgül hem nokta varsa (örn: 9,992.17 -> virgül binlik ayracıdır)
             if (s.includes(',') && s.includes('.')) {
                 if (s.lastIndexOf('.') > s.lastIndexOf(',')) {
                     s = s.replace(/,/g, '');
@@ -592,72 +612,76 @@
             return num.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
-        // 3. CSV Verisini Yükle (Windows-1254 Türkçe Excel uyumlu)
-        Papa.parse("kamulastirma_listesi.csv", {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            encoding: "windows-1254",
-            complete: function(results) {
-                allData = results.data;
-                if (allData.length === 0) return;
+        // 3. CSV Verisini Yükle (UTF-8 ve Windows-1254 Otomatik Algılama)
+        fetch('kamulastirma_listesi.csv')
+            .then(response => {
+                if (!response.ok) throw new Error('CSV dosyası bulunamadı.');
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                let csvText = '';
+                try {
+                    // Önce UTF-8 olarak dene
+                    csvText = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+                } catch (e) {
+                    // UTF-8 değilse Türkçe Windows-1254 (ANSI) olarak çöz
+                    csvText = new TextDecoder('windows-1254').decode(buffer);
+                }
 
-                // Sütun isimlerini esnek olarak eşleştir
-                const keys = Object.keys(allData[0]);
-                colMap.parsel = keys.find(k => k.toLowerCase().includes('parsel')) || keys[4];
-                colMap.malik = keys.find(k => k.toLowerCase().includes('malik')) || keys[7];
-                colMap.hisse = keys.find(k => k.toLowerCase().includes('hisse') && !k.toLowerCase().includes('alan')) || keys[8];
-                colMap.toplamAlan = keys.find(k => k.toLowerCase().includes('toplam')) || keys[6];
-                colMap.hisseAlan = keys.find(k => k.toLowerCase().includes('hisse') && k.toLowerCase().includes('alan')) || keys[9];
-                colMap.mevkii = keys.find(k => k.toLowerCase().includes('mevki')) || keys[3];
-                colMap.mahalle = keys.find(k => k.toLowerCase().includes('mahalle')) || keys[2];
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        allData = results.data;
+                        if (allData.length === 0) return;
 
-                populateFilters();
-                loadGeoJSON();
-                applyFilters();
-            },
-            error: function() {
-                document.getElementById('resultsTableBody').innerHTML = 
-                    '<tr><td colspan="4" style="color:red; text-align:center;">kamulastirma_listesi.csv yüklenemedi.</td></tr>';
-            }
-        });
+                        const keys = Object.keys(allData[0]);
+                        const findCol = (matcher) => keys.find(k => matcher(normalizeHeader(k))) || null;
 
-        // Filtre seçeneklerini doldur
-        function populateFilters() {
-            const uniqueParsels = [...new Set(allData.map(r => (r[colMap.parsel] || '').trim()).filter(Boolean))];
-            const chipContainer = document.getElementById('parselChips');
-            chipContainer.innerHTML = '';
+                        colMap.il = findCol(h => h === 'il');
+                        colMap.ilce = findCol(h => h === 'ilce');
+                        colMap.mahalle = findCol(h => h.includes('mahalle'));
+                        colMap.mevkii = findCol(h => h.includes('mevki'));
+                        colMap.parsel = findCol(h => h.includes('parsel') || h.includes('adaparsel'));
+                        colMap.nitelik = findCol(h => h.includes('nitelik'));
+                        colMap.toplamAlan = findCol(h => h.includes('toplam') && h.includes('alan'));
+                        colMap.malik = findCol(h => h.includes('malik'));
+                        colMap.hisse = findCol(h => h === 'hisse' || (h.includes('hisse') && !h.includes('alan')));
+                        colMap.hisseAlan = findCol(h => h.includes('hisse') && h.includes('alan'));
+                        colMap.kamulastirma = findCol(h => h.includes('kamulastirma') || h.includes('durum'));
 
-            uniqueParsels.forEach(p => {
-                const btn = document.createElement('button');
-                btn.className = 'chip-btn';
-                btn.textContent = p;
-                btn.onclick = () => {
-                    if (selectedChipParsel === p) {
-                        selectedChipParsel = "";
-                        btn.classList.remove('active');
-                    } else {
-                        document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
-                        selectedChipParsel = p;
-                        btn.classList.add('active');
+                        populateDropdowns();
+                        loadGeoJSON();
+                        applyFilters();
                     }
-                    applyFilters();
-                };
-                chipContainer.appendChild(btn);
+                });
+            })
+            .catch(() => {
+                document.getElementById('resultsTableBody').innerHTML =
+                    '<tr><td colspan="4" style="color:red; text-align:center; padding:20px;">kamulastirma_listesi.csv yüklenemedi.</td></tr>';
             });
 
-            const uniqueMevkii = [...new Set(allData.map(r => {
-                const m = (r[colMap.mahalle] || '').trim();
-                const mv = (r[colMap.mevkii] || '').trim();
-                return mv ? `${m} - ${mv}` : m;
-            }).filter(Boolean))];
+        // Tüm açılır listeleri (dropdown) benzersiz verilerle doldur
+        function populateDropdowns() {
+            filterIds.forEach(item => {
+                const selectEl = document.getElementById(item.id);
+                const colName = colMap[item.key];
+                selectEl.innerHTML = '<option value="">Tümü</option>';
 
-            const selectEl = document.getElementById('filterMevkii');
-            uniqueMevkii.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                selectEl.appendChild(opt);
+                if (!colName) return;
+
+                const uniqueVals = [...new Set(
+                    allData
+                        .map(r => (r[colName] !== undefined && r[colName] !== null) ? String(r[colName]).trim() : '')
+                        .filter(v => v !== '')
+                )].sort((a, b) => a.localeCompare(b, 'tr', { numeric: true }));
+
+                uniqueVals.forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    selectEl.appendChild(opt);
+                });
             });
         }
 
@@ -667,7 +691,8 @@
                 .then(res => res.json())
                 .then(data => {
                     geojsonData = data;
-                    renderMapLayer(new Set(allData.map(r => (r[colMap.parsel] || '').trim())));
+                    const allParsels = new Set(allData.map(r => String(r[colMap.parsel] || '').trim()));
+                    renderMapLayer(allParsels);
                     if (geojsonLayer) {
                         map.fitBounds(geojsonLayer.getBounds(), { padding: [30, 30] });
                     }
@@ -681,7 +706,7 @@
 
             geojsonLayer = L.geoJSON(geojsonData, {
                 style: function(feature) {
-                    const pNo = (feature.properties.parsel_no || '').trim();
+                    const pNo = String(feature.properties.parsel_no || '').trim();
                     const isMatched = matchedParsels.has(pNo);
                     return {
                         color: isMatched ? "#ef4444" : "#94a3b8",
@@ -691,9 +716,8 @@
                     };
                 },
                 onEachFeature: function(feature, layer) {
-                    const pNo = (feature.properties.parsel_no || '').trim();
+                    const pNo = String(feature.properties.parsel_no || '').trim();
                     
-                    // Parsel numarasını kalıcı etiket olarak göster
                     layer.bindTooltip(pNo, {
                         permanent: true,
                         direction: 'center',
@@ -716,14 +740,22 @@
         }
 
         function openParselPopup(layer, pNo) {
-            const rows = allData.filter(r => (r[colMap.parsel] || '').trim() === pNo);
+            const rows = allData.filter(r => String(r[colMap.parsel] || '').trim() === pNo);
             let html = `<div class="popup-box"><h4>Ada / Parsel: ${pNo}</h4>`;
             if (rows.length > 0) {
-                const alan = parseNumber(rows[0][colMap.toplamAlan]);
+                const alan = colMap.toplamAlan ? parseNumber(rows[0][colMap.toplamAlan]) : 0;
                 html += `<p><strong>Toplam Alan:</strong> ${formatArea(alan)} m²</p>`;
+                if (colMap.nitelik && rows[0][colMap.nitelik]) {
+                    html += `<p><strong>Nitelik:</strong> ${rows[0][colMap.nitelik]}</p>`;
+                }
+                if (colMap.kamulastirma && rows[0][colMap.kamulastirma]) {
+                    html += `<p><strong>Kamulaştırma Durumu:</strong> ${rows[0][colMap.kamulastirma]}</p>`;
+                }
                 html += `<p><strong>Malik Sayısı:</strong> ${rows.length}</p><ul>`;
                 rows.forEach(r => {
-                    html += `<li><strong>${r[colMap.malik]}</strong> (${r[colMap.hisse]})</li>`;
+                    const mVal = colMap.malik ? (r[colMap.malik] || '-') : '-';
+                    const hVal = colMap.hisse ? (r[colMap.hisse] || '-') : '-';
+                    html += `<li><strong>${mVal}</strong> (${hVal})</li>`;
                 });
                 html += `</ul>`;
             } else {
@@ -735,27 +767,20 @@
 
         // 5. Filtreleme ve Sağ Panel Güncelleme
         function applyFilters() {
-            const qParsel = document.getElementById('filterParsel').value.trim().toLowerCase();
-            const qMalik = document.getElementById('filterMalik').value.trim().toLowerCase();
-            const qMevkii = document.getElementById('filterMevkii').value;
-            const minAlan = parseFloat(document.getElementById('filterMinAlan').value);
-            const maxAlan = parseFloat(document.getElementById('filterMaxAlan').value);
+            const activeFilters = {};
+            filterIds.forEach(item => {
+                activeFilters[item.key] = document.getElementById(item.id).value;
+            });
 
             const filtered = allData.filter(row => {
-                const pNo = (row[colMap.parsel] || '').trim();
-                const malik = (row[colMap.malik] || '').toLowerCase();
-                const m = (row[colMap.mahalle] || '').trim();
-                const mv = (row[colMap.mevkii] || '').trim();
-                const fullMevkii = mv ? `${m} - ${mv}` : m;
-                const tAlan = parseNumber(row[colMap.toplamAlan]);
-
-                if (selectedChipParsel && pNo !== selectedChipParsel) return false;
-                if (qParsel && !pNo.toLowerCase().includes(qParsel)) return false;
-                if (qMalik && !malik.includes(qMalik)) return false;
-                if (qMevkii && fullMevkii !== qMevkii) return false;
-                if (!isNaN(minAlan) && tAlan < minAlan) return false;
-                if (!isNaN(maxAlan) && tAlan > maxAlan) return false;
-
+                for (const item of filterIds) {
+                    const selectedVal = activeFilters[item.key];
+                    const colName = colMap[item.key];
+                    if (selectedVal && colName) {
+                        const rowVal = String(row[colName] || '').trim();
+                        if (rowVal !== selectedVal) return false;
+                    }
+                }
                 return true;
             });
 
@@ -764,11 +789,13 @@
             let totalHisseArea = 0;
 
             filtered.forEach(r => {
-                const pNo = (r[colMap.parsel] || '').trim();
-                if (!uniqueParselMap.has(pNo)) {
-                    uniqueParselMap.set(pNo, parseNumber(r[colMap.toplamAlan]));
+                const pNo = colMap.parsel ? String(r[colMap.parsel] || '').trim() : '';
+                if (pNo && !uniqueParselMap.has(pNo)) {
+                    uniqueParselMap.set(pNo, colMap.toplamAlan ? parseNumber(r[colMap.toplamAlan]) : 0);
                 }
-                totalHisseArea += parseNumber(r[colMap.hisseAlan]);
+                if (colMap.hisseAlan) {
+                    totalHisseArea += parseNumber(r[colMap.hisseAlan]);
+                }
             });
 
             let totalParselArea = 0;
@@ -787,13 +814,17 @@
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#64748b;">Kriterlere uygun kayıt bulunamadı.</td></tr>';
             } else {
                 filtered.forEach(r => {
-                    const pNo = (r[colMap.parsel] || '').trim();
+                    const pNo = colMap.parsel ? String(r[colMap.parsel] || '').trim() : '-';
+                    const malikText = colMap.malik ? (r[colMap.malik] || '-') : '-';
+                    const hisseText = colMap.hisse ? (r[colMap.hisse] || '-') : '-';
+                    const hisseAlanNum = colMap.hisseAlan ? parseNumber(r[colMap.hisseAlan]) : 0;
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><span class="badge-parsel">${pNo}</span></td>
-                        <td>${r[colMap.malik] || '-'}</td>
-                        <td>${r[colMap.hisse] || '-'}</td>
-                        <td style="text-align:right; font-weight:600;">${formatArea(parseNumber(r[colMap.hisseAlan]))}</td>
+                        <td>${malikText}</td>
+                        <td>${hisseText}</td>
+                        <td style="text-align:right; font-weight:600;">${formatArea(hisseAlanNum)}</td>
                     `;
                     tr.onclick = () => focusParselOnMap(pNo);
                     tbody.appendChild(tr);
@@ -801,34 +832,34 @@
             }
 
             // Haritayı Güncelle
-            renderMapLayer(new Set(uniqueParselMap.keys()));
+            const matchedSet = new Set(uniqueParselMap.keys());
+            renderMapLayer(matchedSet);
+
+            // Tek bir parsel seçildiyse haritayı o parsele odakla
+            if (activeFilters.parsel) {
+                focusParselOnMap(activeFilters.parsel);
+            }
         }
 
         function focusParselOnMap(pNo) {
             if (!geojsonLayer) return;
             geojsonLayer.eachLayer(layer => {
-                if ((layer.feature.properties.parsel_no || '').trim() === pNo) {
+                if (String(layer.feature.properties.parsel_no || '').trim() === pNo) {
                     map.fitBounds(layer.getBounds(), { maxZoom: 18, padding: [40, 40] });
                     openParselPopup(layer, pNo);
                 }
             });
         }
 
-        // Event Listeners
-        document.getElementById('filterParsel').addEventListener('input', applyFilters);
-        document.getElementById('filterMalik').addEventListener('input', applyFilters);
-        document.getElementById('filterMevkii').addEventListener('change', applyFilters);
-        document.getElementById('filterMinAlan').addEventListener('input', applyFilters);
-        document.getElementById('filterMaxAlan').addEventListener('input', applyFilters);
+        // Event Listeners (Tüm dropdownlar için)
+        filterIds.forEach(item => {
+            document.getElementById(item.id).addEventListener('change', applyFilters);
+        });
 
         document.getElementById('btnClear').addEventListener('click', () => {
-            document.getElementById('filterParsel').value = '';
-            document.getElementById('filterMalik').value = '';
-            document.getElementById('filterMevkii').value = '';
-            document.getElementById('filterMinAlan').value = '';
-            document.getElementById('filterMaxAlan').value = '';
-            selectedChipParsel = '';
-            document.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+            filterIds.forEach(item => {
+                document.getElementById(item.id).value = '';
+            });
             applyFilters();
             if (geojsonLayer) map.fitBounds(geojsonLayer.getBounds(), { padding: [30, 30] });
         });
