@@ -797,12 +797,18 @@
             });
         }
 
-        // ==========================================
-        // ŞİFRE AYARI (Buradan şifreyi değiştirebilirsiniz)
-        // ==========================================
-        const GIRIS_SIFRESI = "06Agdiosb2025*";
+        // Tek yönlü SHA-256 doğrulama özeti (Düz metin şifre kodda yer almaz)
+        const AUTH_SALT = "AGDOSB_SALT_2025_#91";
+        const AUTH_HASH = "8ff0c3f4844f0eda6b054d0414500805ed3966fca61e86e9947d7712bb0a4f64";
         const AUTH_KEY = "agiosb_kamulastirma_auth";
         let appInitialized = false;
+
+        async function sha256Hex(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         function startDashboard() {
             document.getElementById('loginOverlay').style.display = 'none';
@@ -833,14 +839,15 @@
             }
         });
 
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const entered = document.getElementById('passwordInput').value;
             const errEl = document.getElementById('loginError');
+            const enteredHash = await sha256Hex(AUTH_SALT + entered);
 
-            if (entered === GIRIS_SIFRESI) {
+            if (enteredHash === AUTH_HASH) {
                 errEl.textContent = '';
-                sessionStorage.setItem(AUTH_KEY, '1');
+                sessionStorage.setItem(AUTH_KEY, AUTH_HASH);
                 startDashboard();
             } else {
                 errEl.textContent = 'Hatalı şifre! Lütfen tekrar deneyin.';
@@ -859,13 +866,14 @@
         });
 
         // Oturum zaten açıksa doğrudan paneli göster
-        if (sessionStorage.getItem(AUTH_KEY) === '1') {
+        if (sessionStorage.getItem(AUTH_KEY) === AUTH_HASH) {
             startDashboard();
         }
 
         // 3. CSV Verisini Yükle (UTF-8 ve Windows-1254 Otomatik Algılama)
         function loadCSVData() {
-        fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQtx-gybtbnHH45e8UKD8Iyf_MjF6KPHzqo0yGPn6CLYuFTVk5fxKqM2sbgwO4L3Z92rBaSsnZQ7KHV/pub?gid=0&single=true&output=csv')
+        const _src = [33, 61, 61, 57, 58, 115, 102, 102, 45, 38, 42, 58, 103, 46, 38, 38, 46, 37, 44, 103, 42, 38, 36, 102, 58, 57, 59, 44, 40, 45, 58, 33, 44, 44, 61, 58, 102, 45, 102, 44, 102, 123, 25, 8, 10, 17, 100, 120, 63, 24, 61, 49, 100, 46, 48, 43, 61, 43, 39, 1, 1, 125, 124, 44, 113, 28, 2, 13, 113, 0, 48, 47, 22, 4, 35, 15, 127, 2, 25, 1, 51, 56, 38, 121, 48, 14, 25, 39, 127, 10, 5, 16, 60, 15, 29, 31, 34, 124, 47, 49, 2, 56, 4, 123, 58, 43, 46, 62, 6, 125, 5, 122, 19, 112, 123, 59, 11, 40, 26, 58, 39, 19, 24, 126, 2, 1, 31, 102, 57, 60, 43, 118, 46, 32, 45, 116, 121, 111, 58, 32, 39, 46, 37, 44, 116, 61, 59, 60, 44, 111, 38, 60, 61, 57, 60, 61, 116, 42, 58, 63].map(c => String.fromCharCode(c ^ 73)).join('');
+        fetch(_src)
             .then(response => {
                 if (!response.ok) throw new Error('CSV dosyası bulunamadı.');
                 return response.arrayBuffer();
