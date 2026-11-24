@@ -865,7 +865,7 @@
 
         // 3. CSV Verisini Yükle (UTF-8 ve Windows-1254 Otomatik Algılama)
         function loadCSVData() {
-        fetch('kamulastirma_listesi.csv')
+        fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQtx-gybtbnHH45e8UKD8Iyf_MjF6KPHzqo0yGPn6CLYuFTVk5fxKqM2sbgwO4L3Z92rBaSsnZQ7KHV/pub?gid=0&single=true&output=csv')
             .then(response => {
                 if (!response.ok) throw new Error('CSV dosyası bulunamadı.');
                 return response.arrayBuffer();
@@ -919,7 +919,7 @@
             })
             .catch(() => {
                 document.getElementById('resultsTableBody').innerHTML =
-                    '<tr><td colspan="4" style="color:red; text-align:center; padding:20px;">kamulastirma_listesi.csv yüklenemedi.</td></tr>';
+                    '<tr><td colspan="4" style="color:red; text-align:center; padding:20px;">Google E-Tablolar verisi yüklenemedi. Lütfen internet bağlantınızı ve yayın ayarlarını kontrol edin.</td></tr>';
             });
         }
 
